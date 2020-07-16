@@ -1,14 +1,21 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerPlatformerController : PhysicsObject
 {
+
     public float maxSpeed = 7;
     public float jumpTakeOffSpeed = 7;
 
+    public Transform attackPoint;
+    public float attackRange = 0.5f;
+    public LayerMask enemyLayers; 
+    int attackDamage = 20;
+
     private SpriteRenderer spriteRenderer;
-    private Animator animator;
+    [SerializeField] private Animator animator;
 
     // Use this for initialization
     void Awake()
@@ -35,6 +42,11 @@ public class PlayerPlatformerController : PhysicsObject
             }
         }
 
+        if (Input.GetMouseButtonUp(0))
+        {
+            playerAttack();
+        }
+
         bool flipSprite = (spriteRenderer.flipX ? (move.x > 0.01f) : (move.x < -0.01f));
         if (flipSprite)
         {
@@ -45,5 +57,24 @@ public class PlayerPlatformerController : PhysicsObject
         animator.SetFloat("velocityX", Mathf.Abs(velocity.x) / maxSpeed);
 
         targetVelocity = move * maxSpeed;
+    }
+
+    private void playerAttack()
+    {
+        animator.SetTrigger("attack");
+
+        Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyLayers);
+
+        foreach (Collider2D enemy in hitEnemies)
+        {
+            enemy.GetComponent<EnemyBase>().takeDamage(attackDamage);
+        }
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        if (attackPoint == null)
+            return;
+        Gizmos.DrawWireSphere(attackPoint.position, attackRange);
     }
 }
